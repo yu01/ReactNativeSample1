@@ -4,29 +4,36 @@
  */
 'use strict';
 
+//react-nativeを宣言する
 var React = require('react-native');
 
+//コンポーネントを宣言する
 var {
   AppRegistry,
   Image,
+  ListView,
   StyleSheet,
   Text,
   View,
 } = React;
 
+//モックデータ
 var MOCKED_MOVIES_DATA = [
   {title: 'Title', year: '2015', posters: {thumbnail: 'http://i.imgur.com/UePbdph.jpg'}},
 ];
 
+//API_HOST
 var REQUEST_URL = 'https://raw.githubusercontent.com/facebook/react-native/master/docs/MoviesExample.json';
-
-
 
 var AwesomeProject = React.createClass({
 
+  //初期化 
   getInitialState: function() {
     return {
-      movies: null,
+      dataSource: new ListView.DataSource({
+        rowHasChanged: (row1, row2) => row1 !== row2,
+      }),
+      loaded: false,
     };
   },
 
@@ -34,24 +41,31 @@ var AwesomeProject = React.createClass({
     this.fetchData();
   },
 
+  //データをネットワークから取得する  
   fetchData: function() {
     fetch(REQUEST_URL)
       .then((response) => response.json())
       .then((responseData) => {
         this.setState({
-          movies: responseData.movies,
+          dataSource: this.state.dataSource.cloneWithRows(responseData.movies),
+          loaded: true,
         });
       })
       .done();
   },
 
   render: function() {
-    if (!this.state.movies) {
+    if (!this.state.loaded) {
       return this.renderLoadingView();
     }
 
-    var movie = this.state.movies[0];
-    return this.renderMovie(movie);
+    return (
+      <ListView
+        dataSource={this.state.dataSource}
+        renderRow={this.renderMovie}
+        style={styles.listView}
+      />
+    );
   },
 
   renderLoadingView: function() {
@@ -78,33 +92,9 @@ var AwesomeProject = React.createClass({
       </View>
     );
   },
-
-  
-
-
-  /*render: function() {
-    var movie = MOCKED_MOVIES_DATA[0];
-
-    return (
-        <View style={styles.container}>
-          <Image
-            source={{uri: movie.posters.thumbnail}}
-            style={styles.thumbnail}
-          />
-
-          <View style={styles.rightContainer}>
-            <Text style={styles.title}>{movie.title}</Text>
-            <Text style={styles.year}>{movie.year}</Text>
-          </View>
-
-        </View>
-    );
-
-  }*/
-
 });
 
-
+//スタイルシートを宣言する  
 var styles = StyleSheet.create({
 
   container: {
@@ -133,11 +123,12 @@ var styles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  listView: {
+    paddingTop: 20,
+    backgroundColor: '#F5FCFF',
+  },
+
 });
 
-
 AppRegistry.registerComponent('AwesomeProject', () => AwesomeProject);
-
-
-
 
